@@ -10,7 +10,7 @@ const Navbar = () => {
   };
   return (
     <React.Fragment>
-      <div className="bg-white border-b sticky top-0 z-50 py-2 shadow-sm">
+      <div className="bg-white border-b sticky top-0 z-50 py-3 shadow-sm">
         <header className="flex justify-between items-center px-3 mx-auto max-w-6xl">
           <div className="logo">
             <Link to={"/"}>

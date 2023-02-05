@@ -1,16 +1,34 @@
+import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { auth } from "../../Firebase/firebase";
 import GoogleSignIn from "./GoogleSignIn";
 
 const SignIn = () => {
   const [formData, setFormData] = useState({});
   const [hidePassword, setHidePassword] = useState(false);
-  // const { email, password } = formData;
+  const { email, password } = formData;
+  const navigate = useNavigate();
 
   const handleOnChange = (e) => {
     const newInput = { [e.target.name]: e.target.value };
     setFormData({ ...formData, ...newInput });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/");
+      e.target.reset();
+    } catch (error) {
+      if (error.code === "auth/wrong-password" || "auth/user-not-found") {
+        toast.error("Incorrect Email or Password");
+      }
+      console.log(error);
+    }
   };
 
   return (
@@ -26,7 +44,7 @@ const SignIn = () => {
             />
           </div>
           <div className="w-full md:w-[67%] lg:w-[40%] lg:ml-20">
-            <form>
+            <form onSubmit={handleSubmit}>
               <input
                 type="email"
                 className="mb-6 w-full px-5 py-2 text-gray-700 text-xl bg-white border-gray-300 rounded-md transition ease-in-out"

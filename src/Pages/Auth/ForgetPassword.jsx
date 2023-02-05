@@ -1,14 +1,29 @@
+import { sendPasswordResetEmail } from "firebase/auth";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { auth } from "../../Firebase/firebase";
 import GoogleSignIn from "./GoogleSignIn";
 
 const ForgetPassword = () => {
   const [formData, setFormData] = useState({});
-  // const { email, password } = formData;
+  const { email } = formData;
 
   const handleOnChange = (e) => {
     const newInput = { [e.target.name]: e.target.value };
     setFormData({ ...formData, ...newInput });
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Reset Password Link has been sent to Your Email");
+      e.target.reset();
+    } catch (error) {
+      if (error.code === "auth/user-not-found") {
+        toast.error("User Not Found");
+      }
+    }
   };
   return (
     <React.Fragment>
@@ -23,7 +38,7 @@ const ForgetPassword = () => {
             />
           </div>
           <div className="w-full md:w-[67%] lg:w-[40%] lg:ml-20">
-            <form>
+            <form onSubmit={handleSubmit}>
               <input
                 type="email"
                 className="mb-6 w-full px-5 py-2 text-gray-700 text-xl bg-white border-gray-300 rounded-md transition ease-in-out"

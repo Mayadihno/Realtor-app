@@ -33,10 +33,18 @@ const SignUp = () => {
       await setDoc(doc(db, "users", usersData.uid), formDataCopy);
       toast.success("You have successfull register");
       navigate("/");
+      e.target.reset();
     } catch (error) {
-      toast.error("Something went wrong");
+      if (error.code === "auth/email-already-in-use") {
+        toast.error("Email alredy have already been used");
+        console.log(error);
+      } else if (error.code === "auth/weak-password") {
+        toast.warning("Password should be more than 6 letters");
+      } else {
+        toast.error("Something went wrong");
+        // console.log(error.message);
+      }
     }
-    e.target.reset();
   };
 
   return (

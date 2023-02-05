@@ -7,6 +7,8 @@ import SignIn from "./Pages/Auth/SignIn";
 import SignUp from "./Pages/Auth/SignUp";
 import ForgetPassword from "./Pages/Auth/ForgetPassword";
 import Navbar from "./Components/Navbar/Navbar";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   return (
@@ -20,6 +22,7 @@ function App() {
         <Route path="/create-account" element={<SignUp />} />
         <Route path="/forget-password" element={<ForgetPassword />} />
       </Routes>
+      <ToastContainer position="bottom-center" />
     </div>
   );
 }

@@ -1,15 +1,42 @@
 import React, { useState } from "react";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import GoogleSignIn from "./GoogleSignIn";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth, db } from "../../Firebase/firebase";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
+
 const SignUp = () => {
   const [formData, setFormData] = useState({});
   const [hidePassword, setHidePassword] = useState(false);
-  // const { email, password } = formData;
-
+  const { email, password, fullname, nickname, phoneNumber } = formData;
+  const navigate = useNavigate();
   const handleOnChange = (e) => {
     const newInput = { [e.target.name]: e.target.value };
     setFormData({ ...formData, ...newInput });
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const users = await createUserWithEmailAndPassword(auth, email, password);
+      updateProfile(auth.currentUser, {
+        displayName: fullname,
+        Nickname: nickname,
+        phoneNumber: phoneNumber,
+      });
+      const usersData = users.user;
+      const formDataCopy = { ...formData };
+      delete formDataCopy.password;
+      formDataCopy.timestamp = serverTimestamp();
+
+      await setDoc(doc(db, "users", usersData.uid), formDataCopy);
+      toast.success("You have successfull register");
+      navigate("/");
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+    e.target.reset();
   };
 
   return (
@@ -25,13 +52,27 @@ const SignUp = () => {
             />
           </div>
           <div className="w-full md:w-[67%] lg:w-[40%] lg:ml-20">
-            <form>
+            <form onSubmit={handleSubmit}>
               <input
                 type="text"
                 className="mb-6 w-full px-5 py-2 text-gray-700 text-xl bg-white border-gray-300 rounded-md transition ease-in-out"
                 name="fullname"
                 onChange={handleOnChange}
                 placeholder="Full Name"
+              />
+              <input
+                type="text"
+                className="mb-6 w-full px-5 py-2 text-gray-700 text-xl bg-white border-gray-300 rounded-md transition ease-in-out"
+                name="nickname"
+                onChange={handleOnChange}
+                placeholder="Nickname"
+              />
+              <input
+                type="tel"
+                className="mb-6 w-full px-5 py-2 text-gray-700 text-xl bg-white border-gray-300 rounded-md transition ease-in-out"
+                name="phonenumber"
+                onChange={handleOnChange}
+                placeholder="phoneNumber"
               />
               <input
                 type="email"

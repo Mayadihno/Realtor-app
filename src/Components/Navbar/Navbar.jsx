@@ -1,8 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import UseAuth from "../Hooks/UseAuth";
 
 const Navbar = () => {
   const location = useLocation();
+  const { loggedIn } = UseAuth();
   const loadPath = (route) => {
     if (route === location.pathname) {
       return true;
@@ -41,15 +43,28 @@ const Navbar = () => {
                   Offers
                 </li>
               </Link>
-              <Link to={"/login"}>
-                <li
-                  className={`py-3 text-sm font-semibold text-gray-400 border-b-[3px] border-b-transparent ${
-                    loadPath("/login") && "text-black border-b-red-500"
-                  }`}
-                >
-                  Login
-                </li>
-              </Link>
+              {!loggedIn && (
+                <Link to={"/login"}>
+                  <li
+                    className={`py-3 text-sm font-semibold text-gray-400 border-b-[3px] border-b-transparent ${
+                      loadPath("/login") && "text-black border-b-red-500"
+                    }`}
+                  >
+                    Login
+                  </li>
+                </Link>
+              )}
+              {loggedIn && (
+                <Link to={"/profile"}>
+                  <li
+                    className={`py-3 text-sm font-semibold text-gray-400 border-b-[3px] border-b-transparent ${
+                      loadPath("/profile") && "text-black border-b-red-500"
+                    }`}
+                  >
+                    Profile
+                  </li>
+                </Link>
+              )}
             </ul>
           </div>
         </header>

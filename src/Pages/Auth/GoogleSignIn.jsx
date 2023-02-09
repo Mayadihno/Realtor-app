@@ -25,7 +25,7 @@ const GoogleSignIn = () => {
         });
         navigate("/");
       } else {
-        toast.error("Email Already been used");
+        navigate("/");
       }
     } catch (error) {
       toast.error("Google Provider error");

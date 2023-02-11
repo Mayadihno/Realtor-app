@@ -1,15 +1,26 @@
-import React from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import UseAuth from "../Hooks/UseAuth";
+import { auth } from "../../Firebase/firebase";
 
 const Navbar = () => {
+  const [pageState, setPageState] = useState("Sign in");
   const location = useLocation();
-  const { loggedIn } = UseAuth();
   const loadPath = (route) => {
     if (route === location.pathname) {
       return true;
     }
   };
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setPageState("Profile");
+      } else {
+        setPageState("Sign in");
+      }
+    });
+  }, [auth]);
+
   return (
     <React.Fragment>
       <div className="bg-white border-b sticky top-0 z-50 py-3 shadow-sm">
@@ -34,6 +45,15 @@ const Navbar = () => {
                   Home
                 </li>
               </Link>
+              <Link to={"/paypal"}>
+                <li
+                  className={`py-3 text-sm font-semibold text-gray-400 border-b-[3px] border-b-transparent ${
+                    loadPath("/paypal") && "text-black border-b-red-500"
+                  }`}
+                >
+                  paypal
+                </li>
+              </Link>
               <Link to={"/offers"}>
                 <li
                   className={`py-3 text-sm font-semibold text-gray-400 border-b-[3px] border-b-transparent ${
@@ -43,28 +63,16 @@ const Navbar = () => {
                   Offers
                 </li>
               </Link>
-              {!loggedIn && (
-                <Link to={"/login"}>
-                  <li
-                    className={`py-3 text-sm font-semibold text-gray-400 border-b-[3px] border-b-transparent ${
-                      loadPath("/login") && "text-black border-b-red-500"
-                    }`}
-                  >
-                    Login
-                  </li>
-                </Link>
-              )}
-              {loggedIn && (
-                <Link to={"/profile"}>
-                  <li
-                    className={`py-3 text-sm font-semibold text-gray-400 border-b-[3px] border-b-transparent ${
-                      loadPath("/profile") && "text-black border-b-red-500"
-                    }`}
-                  >
-                    Profile
-                  </li>
-                </Link>
-              )}
+              <Link to={"/profile"}>
+                <li
+                  className={`py-3 text-sm font-semibold text-gray-400 border-b-[3px] border-b-transparent ${
+                    (loadPath("/profile") && "text-black border-b-red-500") ||
+                    (loadPath("/login") && "text-black border-b-red-500")
+                  }`}
+                >
+                  {pageState}
+                </li>
+              </Link>
             </ul>
           </div>
         </header>

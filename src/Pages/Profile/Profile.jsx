@@ -1,6 +1,6 @@
 import { signOut, updateProfile } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
-import React, { useState } from "react";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { auth, db } from "../../Firebase/firebase";
@@ -8,9 +8,11 @@ import { auth, db } from "../../Firebase/firebase";
 const Profile = () => {
   const navigate = useNavigate();
   const [changeDetail, setChangeDetail] = useState(false);
+  const [allData, setAllData] = useState([]);
   const [formData, setFormData] = useState({
     fullname: auth?.currentUser?.displayName,
     email: auth?.currentUser?.email,
+    nickname: allData.nickname,
   });
   const handleLogout = async () => {
     await signOut(auth);
@@ -36,7 +38,18 @@ const Profile = () => {
       toast.error("Can't Update Profile");
     }
   };
-  const { fullname, email } = formData;
+  const getDetails = async () => {
+    const docRefs = doc(db, "users", auth.currentUser.uid);
+    const docSnap = await getDoc(docRefs);
+    if (docSnap.exists()) {
+      setAllData(docSnap.data());
+    }
+  };
+  useEffect(() => {
+    getDetails();
+  }, []);
+
+  const { fullname, email, nickname } = formData;
 
   return (
     <React.Fragment>
@@ -59,6 +72,15 @@ const Profile = () => {
               value={email}
               name="email"
               disabled
+              onChange={handleChange}
+              className=" mb-6 w-full px-4 py-2 text-gray-700 text-xl bg-white border border-gray-300 rounded transition ease-in-out"
+            />
+            <input
+              type="text"
+              value={nickname}
+              name="nickname"
+              disabled
+              placeholder={allData.nickname}
               onChange={handleChange}
               className=" mb-6 w-full px-4 py-2 text-gray-700 text-xl bg-white border border-gray-300 rounded transition ease-in-out"
             />

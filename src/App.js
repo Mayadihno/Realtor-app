@@ -10,6 +10,7 @@ import Navbar from "./Components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PrivateRoute from "./Components/PrivavteRoute/PrivateRoute";
+import Paypal from "./Components/Paypal/Paypal";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
         </Route>
         <Route path="/offers" element={<Offers />} />
+        <Route path="/paypal" element={<Paypal />} />
         <Route path="/login" element={<SignIn />} />
         <Route path="/create-account" element={<SignUp />} />
         <Route path="/forget-password" element={<ForgetPassword />} />

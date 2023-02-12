@@ -11,6 +11,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PrivateRoute from "./Components/PrivavteRoute/PrivateRoute";
 import Paypal from "./Components/Paypal/Paypal";
+import CreateListing from "./Pages/Listing/CreateListing";
 
 function App() {
   return (
@@ -18,8 +19,9 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/profile" element={<PrivateRoute />}>
-          <Route path="/profile" element={<Profile />} />
+        <Route path="/*" element={<PrivateRoute />}>
+          <Route path="/*/profile" element={<Profile />} />
+          <Route path="/*/create-listing" element={<CreateListing />} />
         </Route>
         <Route path="/offers" element={<Offers />} />
         <Route path="/paypal" element={<Paypal />} />

@@ -1,18 +1,21 @@
 import { signOut, updateProfile } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { auth, db } from "../../Firebase/firebase";
+import { FcHome } from "react-icons/fc";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [changeDetail, setChangeDetail] = useState(false);
-  const [allData, setAllData] = useState([]);
+  const [allData, setAllData] = useState({});
+  const { phonenumber } = allData;
+
   const [formData, setFormData] = useState({
     fullname: auth?.currentUser?.displayName,
     email: auth?.currentUser?.email,
-    nickname: allData.nickname,
+    nickname: phonenumber,
   });
   const handleLogout = async () => {
     await signOut(auth);
@@ -105,6 +108,19 @@ const Profile = () => {
               </p>
             </div>
           </form>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-sm text-white font-medium uppercase px-6 py-3 rounded-sm shadow-md hover:bg-blue-800 transition ease-in-out duration-200 hover:shadow-lg"
+          >
+            <Link
+              to={"/create-listing"}
+              className="flex justify-center items-center"
+            >
+              <FcHome className="text-3xl bg-red-200 mr-2 rounded-full p-1 border-2 " />
+              sell or rent your home
+            </Link>
+          </button>
         </div>
       </section>
     </React.Fragment>

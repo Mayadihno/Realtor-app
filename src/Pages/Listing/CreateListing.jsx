@@ -1,6 +1,21 @@
 import React, { useState } from "react";
+import { toast } from "react-toastify";
+import Spinner from "../../Components/Spinner/Spinner";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
+import { auth, db } from "../../Firebase/firebase";
+import { v4 as uuidv4 } from "uuid";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 const CreateListing = () => {
+  const navigate = useNavigate();
+  const [geoLocation, setGeoLocation] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     type: "rent",
     name: "",
@@ -13,6 +28,9 @@ const CreateListing = () => {
     regularPrice: 0,
     offer: false,
     discountedPrice: 0,
+    longitude: 0,
+    latitude: 0,
+    images: {},
   });
   const {
     type,
@@ -26,24 +44,119 @@ const CreateListing = () => {
     address,
     offer,
     description,
+    longitude,
+    latitude,
+    images,
   } = formData;
-  const handleChange = () => {};
+  const handleChange = (e) => {
+    let boolean = null;
+    if (e.target.value === "true") {
+      boolean = true;
+    }
+    if (e.target.value === "false") {
+      boolean = false;
+    }
+    // Files
+    if (e.target.files) {
+      setFormData((prevState) => ({
+        ...prevState,
+        images: e.target.files,
+      }));
+    }
+    // Text/Boolean/Number
+    if (!e.target.files) {
+      setFormData((prevState) => ({
+        ...prevState,
+        [e.target.id]: boolean ?? e.target.value,
+      }));
+    }
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    if (discountedPrice >= regularPrice) {
+      setLoading(false);
+      toast.error("Discounted Price should be less than Regular price");
+      return;
+    }
+    if (images.length > 6) {
+      setLoading(false);
+      toast.error("selected images should not be more than 6");
+      return;
+    }
+
+    const storeImages = async (image) => {
+      return new Promise((resolve, reject) => {
+        const storage = getStorage();
+        const fileName = `${auth.currentUser.uid}-${image.name}-${uuidv4()}`;
+        const storageRef = ref(storage, fileName);
+        const uploadTask = uploadBytesResumable(storageRef, image);
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          },
+          (error) => {
+            reject(error);
+          },
+          () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              resolve(downloadURL);
+            });
+          }
+        );
+      });
+    };
+
+    const imgUrls = await Promise.all(
+      [...images].map((image) => storeImages(image))
+    ).catch((error) => {
+      if (error.code === "storage/unauthorized") {
+        setLoading(false);
+        toast.error("Image Size is greater than 2mb");
+      }
+
+      return;
+    });
+    const formDataCopy = {
+      ...formData,
+      imgUrls,
+      timestamp: serverTimestamp(),
+    };
+
+    delete formDataCopy.images;
+    delete formDataCopy.latitude;
+    delete formDataCopy.longitude;
+    !formDataCopy.offer && delete formDataCopy.discountedPrice;
+
+    const docRef = await addDoc(collection(db, "listings"), formDataCopy);
+    setLoading(false);
+    toast.success("Listening is Created Successfully");
+    navigate(`/category/${formDataCopy.type}/${docRef.id}`);
+  };
+  if (loading) {
+    return <Spinner />;
+  }
   return (
     <React.Fragment>
       <main className="px-2 max-w-md mx-auto">
         <h1 className="text-center text-3xl font-bold mt-7">
           Create a Listing
         </h1>
-        <form>
+        <form onSubmit={handleSubmit}>
           <p className="text-lg mt-6 font-semibold">Sell / Rent</p>
           <div className="flex justify-between items-center ">
             <button
               type="button"
               id="type"
               value={"sale"}
-              onChange={handleChange}
+              onClick={handleChange}
               className={` mr-3 px-7 py-3 shadow-md text-sm uppercase font-medium rounded-sm hover:shadow-lg focus:shadow-lg active:shadow-lg transition ease-in-out duration-150 w-full ${
-                type === "rent" ? "bg-white" : "bg-slate-600 text-white"
+                type === "rent"
+                  ? "bg-white text-black"
+                  : "bg-slate-600 text-white"
               }`}
             >
               sell
@@ -52,9 +165,11 @@ const CreateListing = () => {
               type="button"
               id="type"
               value={"rent"}
-              onChange={handleChange}
+              onClick={handleChange}
               className={` ml-3 px-7 py-3 shadow-md text-sm uppercase font-medium rounded-sm hover:shadow-lg focus:shadow-lg active:shadow-lg transition ease-in-out duration-150 w-full ${
-                type === "sale" ? "bg-white" : "bg-slate-600 text-white"
+                type === "sale"
+                  ? "bg-white text-black"
+                  : "bg-slate-600 text-white"
               }`}
             >
               Rent
@@ -106,7 +221,7 @@ const CreateListing = () => {
               type="button"
               id="parking"
               value={true}
-              onChange={handleChange}
+              onClick={handleChange}
               className={` mr-3 px-7 py-3 shadow-md text-sm uppercase font-medium rounded-sm hover:shadow-lg focus:shadow-lg active:shadow-lg transition ease-in-out duration-150 w-full ${
                 !parking ? "bg-white" : "bg-slate-600 text-white"
               }`}
@@ -117,7 +232,7 @@ const CreateListing = () => {
               type="button"
               id="parking"
               value={false}
-              onChange={handleChange}
+              onClick={handleChange}
               className={` ml-3 px-7 py-3 shadow-md text-sm uppercase font-medium rounded-sm hover:shadow-lg focus:shadow-lg active:shadow-lg transition ease-in-out duration-150 w-full ${
                 parking ? "bg-white" : "bg-slate-600 text-white"
               }`}
@@ -131,7 +246,7 @@ const CreateListing = () => {
               type="button"
               id="furnished"
               value={true}
-              onChange={handleChange}
+              onClick={handleChange}
               className={` mr-3 px-7 py-3 shadow-md text-sm uppercase font-medium rounded-sm hover:shadow-lg focus:shadow-lg active:shadow-lg transition ease-in-out duration-150 w-full ${
                 !furnished ? "bg-white" : "bg-slate-600 text-white"
               }`}
@@ -142,7 +257,7 @@ const CreateListing = () => {
               type="button"
               id="furnished"
               value={false}
-              onChange={handleChange}
+              onClick={handleChange}
               className={` ml-3 px-7 py-3 shadow-md text-sm uppercase font-medium rounded-sm hover:shadow-lg focus:shadow-lg active:shadow-lg transition ease-in-out duration-150 w-full ${
                 furnished ? "bg-white" : "bg-slate-600 text-white"
               }`}
@@ -157,8 +272,38 @@ const CreateListing = () => {
             required
             value={address}
             onChange={handleChange}
-            className="w-full mb-6 px-4 py-2 text-xl font-medium text-gray-700 border border-gray-300 rounded-sm transition ease-in-out duration-150 focus:text-gray-700 focus:bg-white focus:border-slate-600"
+            className="w-full px-4 py-2 text-xl font-medium text-gray-700 border border-gray-300 rounded-sm transition ease-in-out duration-150 focus:text-gray-700 focus:bg-white focus:border-slate-600"
           />
+          {!geoLocation && (
+            <div className="my-5 flex space-x-6">
+              <div className="">
+                <p className="text-lg font-semibold">Latitude</p>
+                <input
+                  type="number"
+                  id="latitude"
+                  value={latitude}
+                  required
+                  min={"-90"}
+                  max="90"
+                  onChange={handleChange}
+                  className="w-full text-center text-gray-700 bg-white transition-all px-4 py-2 border border-gray-300 text-xl rounded"
+                />
+              </div>
+              <div className="">
+                <p className="text-lg font-semibold">Longitude</p>
+                <input
+                  type="number"
+                  id="longitude"
+                  value={longitude}
+                  min={"-180"}
+                  max="180"
+                  required
+                  onChange={handleChange}
+                  className="w-full text-center text-gray-700 bg-white transition-all px-4 py-2 border border-gray-300 text-xl rounded"
+                />
+              </div>
+            </div>
+          )}
           <p className="text-lg font-semibold">Description</p>
           <textarea
             placeholder="Description"
@@ -174,7 +319,7 @@ const CreateListing = () => {
               type="button"
               id="offer"
               value={true}
-              onChange={handleChange}
+              onClick={handleChange}
               className={` mr-3 px-7 py-3 shadow-md text-sm uppercase font-medium rounded-sm hover:shadow-lg focus:shadow-lg active:shadow-lg transition ease-in-out duration-150 w-full ${
                 !offer ? "bg-white" : "bg-slate-600 text-white"
               }`}
@@ -183,9 +328,9 @@ const CreateListing = () => {
             </button>
             <button
               type="button"
-              id="furnished"
+              id="offer"
               value={false}
-              onChange={handleChange}
+              onClick={handleChange}
               className={` ml-3 px-7 py-3 shadow-md text-sm uppercase font-medium rounded-sm hover:shadow-lg focus:shadow-lg active:shadow-lg transition ease-in-out duration-150 w-full ${
                 offer ? "bg-white" : "bg-slate-600 text-white"
               }`}
@@ -213,7 +358,7 @@ const CreateListing = () => {
               )}
             </div>
           </div>
-          {!offer && (
+          {offer && (
             <div className=" mb-6">
               <p className="text-lg font-semibold">Discounted Price</p>
               <div className="flex items-center space-x-7">

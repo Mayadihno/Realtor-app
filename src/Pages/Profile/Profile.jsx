@@ -1,15 +1,27 @@
 import { signOut, updateProfile } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { auth, db } from "../../Firebase/firebase";
 import { FcHome } from "react-icons/fc";
+import ListingData from "../Listing/ListingData";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [changeDetail, setChangeDetail] = useState(false);
   const [allData, setAllData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [listing, setListing] = useState([]);
   const { phonenumber } = allData;
 
   const [formData, setFormData] = useState({
@@ -53,6 +65,29 @@ const Profile = () => {
   }, []);
 
   const { fullname, email, nickname } = formData;
+
+  const fetchUserListings = async () => {
+    const listingRef = collection(db, "listings");
+    const q = query(
+      listingRef,
+      where("userRef", "==", auth.currentUser.uid),
+      orderBy("timestamp", "desc")
+    );
+
+    const querySnap = await getDocs(q);
+    let listings = [];
+    querySnap.forEach((doc) => {
+      return listings.push({
+        id: doc.id,
+        data: doc.data(),
+      });
+    });
+    setListing(listings);
+    setLoading(false);
+  };
+  useEffect(() => {
+    fetchUserListings();
+  }, []);
 
   return (
     <React.Fragment>
@@ -123,6 +158,22 @@ const Profile = () => {
           </button>
         </div>
       </section>
+      <div className="px-3 max-w-6xl mt-6 mx-auto">
+        {!loading && listing.length > 0 && (
+          <div className="">
+            <h1 className="text-2xl text-center font-semibold">My Listings</h1>
+            <ul>
+              {listing.map((listing) => (
+                <ListingData
+                  key={listing.id}
+                  id={listing.id}
+                  listing={listing.data}
+                />
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </React.Fragment>
   );
 };
